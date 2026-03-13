@@ -51,3 +51,87 @@ def test_remove_book_invalid():
     collection = BookCollection()
     result = collection.remove_book("Nonexistent Book")
     assert result is False
+
+
+def test_search_by_partial_title():
+    collection = BookCollection()
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.search_books("Hob")
+    assert len(results) == 1
+    assert results[0].title == "The Hobbit"
+
+
+def test_search_by_partial_author():
+    collection = BookCollection()
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    results = collection.search_books("Orwell")
+    assert len(results) == 1
+    assert results[0].title == "1984"
+
+
+def test_search_case_insensitive():
+    collection = BookCollection()
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    results = collection.search_books("the hobbit")
+    assert len(results) == 1
+    assert results[0].title == "The Hobbit"
+
+
+def test_search_matches_title_and_author():
+    collection = BookCollection()
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    collection.add_book("Frank's Adventure", "Jane Doe", 2020)
+    results = collection.search_books("Frank")
+    assert len(results) == 2
+    titles = {b.title for b in results}
+    assert titles == {"Dune", "Frank's Adventure"}
+
+
+def test_search_no_results():
+    collection = BookCollection()
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    results = collection.search_books("Python")
+    assert len(results) == 0
+
+
+def test_list_by_year_in_range():
+    collection = BookCollection()
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    results = collection.list_by_year(1940, 1970)
+    assert len(results) == 2
+    titles = {b.title for b in results}
+    assert titles == {"1984", "Dune"}
+
+
+def test_list_by_year_excludes_out_of_range():
+    collection = BookCollection()
+    collection.add_book("The Hobbit", "J.R.R. Tolkien", 1937)
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.list_by_year(1950, 2000)
+    assert len(results) == 0
+
+
+def test_list_by_year_boundary_values():
+    collection = BookCollection()
+    collection.add_book("1984", "George Orwell", 1949)
+    collection.add_book("Dune", "Frank Herbert", 1965)
+    results = collection.list_by_year(1949, 1965)
+    assert len(results) == 2
+
+
+def test_list_by_year_inverted_range():
+    collection = BookCollection()
+    collection.add_book("1984", "George Orwell", 1949)
+    results = collection.list_by_year(2000, 1900)
+    assert len(results) == 0
+
+
+def test_list_by_year_empty_collection():
+    collection = BookCollection()
+    results = collection.list_by_year(1900, 2000)
+    assert len(results) == 0

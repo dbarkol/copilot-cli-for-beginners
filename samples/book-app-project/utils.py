@@ -1,14 +1,34 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING
+
+from exceptions import ValidationError
 
 if TYPE_CHECKING:
     from books import Book
+
+MIN_YEAR = 1000
 
 
 # ---------------------------------------------------------------------------
 # Pure validation / formatting helpers (no I/O)
 # ---------------------------------------------------------------------------
+
+def validate_year(year: int) -> int:
+    """Validate that *year* is within the acceptable range.
+
+    Returns the year unchanged if valid, otherwise raises
+    :class:`ValidationError`.  The upper bound is the current
+    calendar year so the check stays correct without hard-coding.
+    """
+    max_year = datetime.date.today().year
+    if year < MIN_YEAR or year > max_year:
+        raise ValidationError(
+            f"Year must be between {MIN_YEAR} and {max_year}."
+        )
+    return year
+
 
 def validate_menu_choice(choice: str) -> str | None:
     """Return the choice if valid (digit 1-5), or None."""
@@ -94,7 +114,8 @@ def get_book_details() -> tuple[str, str, int]:
     """Interactively prompt the user for book details.
 
     Title and author are required and will re-prompt until non-empty.
-    Year defaults to 0 if left blank or not a valid integer.
+    Year must be a valid integer between :data:`MIN_YEAR` and the current
+    year; the prompt repeats until a valid value is entered.
 
     Returns:
         tuple: (title, author, year)
@@ -111,10 +132,17 @@ def get_book_details() -> tuple[str, str, int]:
             break
         print("Author cannot be empty. Please enter an author name.")
 
-    year_input = input("Enter publication year: ").strip()
-    year = parse_year(year_input)
-    if year is None:
-        print("Invalid year. Defaulting to 0.")
-        year = 0
+    max_year = datetime.date.today().year
+    while True:
+        year_input = input("Enter publication year: ").strip()
+        year = parse_year(year_input)
+        if year is None:
+            print("Please enter a valid number.")
+            continue
+        try:
+            validate_year(year)
+            break
+        except ValidationError as e:
+            print(f"{e}")
 
     return title, author, year

@@ -3,6 +3,7 @@ from dataclasses import dataclass, asdict
 from typing import List, Optional
 
 from exceptions import BookNotFoundError, StorageError, ValidationError
+from utils import validate_year
 
 DATA_FILE = "data.json"
 
@@ -54,6 +55,7 @@ class BookCollection:
             raise ValidationError("Title cannot be empty.")
         if not author or not author.strip():
             raise ValidationError("Author cannot be empty.")
+        validate_year(year)
 
         book = Book(title=title.strip(), author=author.strip(), year=year)
         self.books.append(book)
@@ -94,5 +96,12 @@ class BookCollection:
         ]
 
     def list_by_year(self, start: int, end: int) -> List[Book]:
-        """Return books with a publication year within the given inclusive range."""
-        return [b for b in self.books if start <= b.year <= end]
+        """Return books with a publication year within the given inclusive range.
+
+        Results are sorted ascending by year. Books from the same year
+        retain their original insertion order (stable sort).
+        """
+        return sorted(
+            (b for b in self.books if start <= b.year <= end),
+            key=lambda b: b.year,
+        )

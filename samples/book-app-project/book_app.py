@@ -19,8 +19,12 @@ def handle_add() -> None:
     author = input("Author: ").strip()
     year_str = input("Year: ").strip()
 
+    if not year_str:
+        print("\nError: Year is required.\n")
+        return
+
     try:
-        year = int(year_str) if year_str else 0
+        year = int(year_str)
     except ValueError:
         print(f"\nError: '{year_str}' is not a valid year.\n")
         return

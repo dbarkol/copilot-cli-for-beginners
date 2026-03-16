@@ -107,7 +107,7 @@ class TestSaveBooks:
 
     def test_save_to_readonly_raises_storage_error(self):
         col = BookCollection()
-        col.add_book("X", "Y", 1)
+        col.add_book("X", "Y", 2000)
         col.save_books()
         os.chmod(DATA_FILE, 0o000)
         try:
@@ -130,8 +130,8 @@ class TestAddBook:
         assert book.title == "Dune"
 
     def test_increments_collection(self, empty_collection):
-        empty_collection.add_book("A", "B", 1)
-        empty_collection.add_book("C", "D", 2)
+        empty_collection.add_book("A", "B", 2000)
+        empty_collection.add_book("C", "D", 2001)
         assert len(empty_collection.list_books()) == 2
 
     def test_strips_whitespace(self, empty_collection):
@@ -154,6 +154,34 @@ class TestAddBook:
     def test_whitespace_author_raises_validation_error(self, empty_collection):
         with pytest.raises(ValidationError, match="Author"):
             empty_collection.add_book("Title", "   ", 2000)
+
+    def test_negative_year_raises_validation_error(self, empty_collection):
+        with pytest.raises(ValidationError, match="Year must be between"):
+            empty_collection.add_book("Title", "Author", -1)
+
+    def test_zero_year_raises_validation_error(self, empty_collection):
+        with pytest.raises(ValidationError, match="Year must be between"):
+            empty_collection.add_book("Title", "Author", 0)
+
+    def test_year_below_minimum_raises_validation_error(self, empty_collection):
+        with pytest.raises(ValidationError, match="Year must be between"):
+            empty_collection.add_book("Title", "Author", 999)
+
+    def test_future_year_raises_validation_error(self, empty_collection):
+        import datetime
+        future = datetime.date.today().year + 1
+        with pytest.raises(ValidationError, match="Year must be between"):
+            empty_collection.add_book("Title", "Author", future)
+
+    def test_minimum_year_accepted(self, empty_collection):
+        book = empty_collection.add_book("Old Book", "Ancient Author", 1000)
+        assert book.year == 1000
+
+    def test_current_year_accepted(self, empty_collection):
+        import datetime
+        current = datetime.date.today().year
+        book = empty_collection.add_book("New Book", "Author", current)
+        assert book.year == current
 
 
 # ---------------------------------------------------------------------------
